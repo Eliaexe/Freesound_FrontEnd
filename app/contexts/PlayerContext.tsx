@@ -18,7 +18,7 @@ interface PlayerState {
 }
 
 interface PlayerActions {
-  playTrack: (track: api.SpotifyTrack, playlist?: api.SpotifyTrack[]) => void;
+  playTrack: (track: api.SpotifyTrack, playlist?: api.SpotifyTrack[]) => Promise<void>;
   playTrackFromPlaylist: (trackIndex: number) => void;
   togglePlayPause: () => void;
   playNextTrack: () => void;

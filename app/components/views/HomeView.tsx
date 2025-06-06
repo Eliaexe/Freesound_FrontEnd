@@ -9,7 +9,7 @@ import { fetcher } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type ContentItem = SearchResultItem;
-const API_URL = "http://localhost:5501";
+const API_URL = "https://reconstruction-starring-birds-fig.trycloudflare.com/";
 
 interface HomeSection {
     title: string;

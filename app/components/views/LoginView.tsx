@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Music } from 'lucide-react';
 
-const API_URL = "http://localhost:5501";
+const API_URL = "https://reconstruction-starring-birds-fig.trycloudflare.com/";
 
 export function LoginView() {
     return (

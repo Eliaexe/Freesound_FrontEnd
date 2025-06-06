@@ -13,7 +13,7 @@ interface UserStatus {
   user?: User;
 }
 
-const API_URL = "http://localhost:5501";
+const API_URL = "https://reconstruction-starring-birds-fig.trycloudflare.com/";
 
 export function useUser() {
   const { data, error, isLoading, mutate } = useSWR<UserStatus>(`${API_URL}/auth/status`, fetcher);

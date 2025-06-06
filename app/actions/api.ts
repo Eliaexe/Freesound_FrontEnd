@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5501";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://reconstruction-starring-birds-fig.trycloudflare.com/";
 
 export interface SpotifyUser {
   displayName: string;
