@@ -20,10 +20,134 @@ export interface SpotifyTrack {
   uri?: string;
   preview_url?: string;
   image?: string;
+  type?: 'track';
+  relevance?: number;
+  popularity?: number;
+}
+
+// Nuove interfacce per ricerca multi-tipo
+export interface SpotifyArtist {
+  spotify_id: string;
+  name: string;
+  image?: string;
+  type: 'artist';
+  genres: string[];
+  followers: number;
+  popularity: number;
+  relevance: number;
+}
+
+export interface SpotifyAlbum {
+  spotify_id: string;
+  name: string;
+  artist: string;
+  image?: string;
+  type: 'album';
+  release_date?: string;
+  total_tracks: number;
+  relevance: number;
+}
+
+export interface SpotifyPlaylistResult {
+  spotify_id: string;
+  name: string;
+  description: string;
+  image?: string;
+  type: 'playlist';
+  owner: string;
+  tracks_total: number;
+  relevance: number;
+}
+
+export type SearchResultItem = SpotifyTrack | SpotifyArtist | SpotifyAlbum | SpotifyPlaylistResult;
+
+// Nuove interfacce per dettagli artista e album
+export interface ArtistDetails {
+  id: string;
+  name: string;
+  image?: string;
+  followers: number;
+  popularity: number;
+  genres: string[];
+  external_url?: string;
+}
+
+export interface ArtistDetailsResponse {
+  success: boolean;
+  artist: ArtistDetails;
+  topTracks: SpotifyTrack[];
+  albums: AlbumSimple[];
+  message?: string;
+  error?: { message: string; status: number };
+}
+
+export interface AlbumSimple {
+  id: string;
+  name: string;
+  image?: string;
+  release_date: string;
+  total_tracks: number;
+  type: string;
+  external_url?: string;
+}
+
+export interface AlbumDetails {
+  id: string;
+  name: string;
+  artist: string;
+  image?: string;
+  release_date: string;
+  total_tracks: number;
+  genres: string[];
+  popularity: number;
+  type: string;
+  external_url?: string;
+  label?: string;
+  copyright?: string;
+}
+
+export interface AlbumTrack {
+  track_number: number;
+  name: string;
+  artist: string;
+  duration: number;
+  spotify_id: string;
+  preview_url?: string;
+  explicit: boolean;
+  album: string;
+  image?: string;
+}
+
+export interface AlbumDetailsResponse {
+  success: boolean;
+  album: AlbumDetails;
+  tracks: AlbumTrack[];
+  message?: string;
+  error?: { message: string; status: number };
+}
+
+export interface SearchByType {
+  tracks: SpotifyTrack[];
+  artists: SpotifyArtist[];
+  albums: SpotifyAlbum[];
+  playlists: SpotifyPlaylistResult[];
+}
+
+export interface TotalFound {
+  tracks: number;
+  artists: number;
+  albums: number;
+  playlists: number;
 }
 
 export interface SearchResponse {
+  // Compatibilità con versione precedente
   tracks: SpotifyTrack[];
+  
+  // Nuove proprietà per ricerca multi-tipo
+  results?: SearchResultItem[];
+  by_type?: SearchByType;
+  total_found?: TotalFound;
 }
 
 export interface SpotifyPlaylist {
@@ -51,6 +175,20 @@ export interface PlaylistTracksResponse {
   previous: string | null;
 }
 
+// Nuove interfacce per raccomandazioni
+export interface RecommendationResponse {
+  success: boolean;
+  tracks: SpotifyTrack[];
+  message?: string;
+}
+
+export interface RecommendationOptions {
+  seed_tracks?: string;
+  seed_artists?: string; 
+  seed_genres?: string;
+  limit?: number;
+}
+
 // Helper per gestire le risposte fetch
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -64,21 +202,27 @@ async function handleResponse<T>(response: Response): Promise<T> {
     console.error("Errore API:", response.status, errorData);
     throw new Error(errorData?.error || errorData?.message || "Errore sconosciuto dal server");
   }
-  // Se lo status è 204 No Content o se il content-type non è JSON, potrebbe non esserci corpo
-  if (response.status === 204 || response.headers.get("content-type")?.includes("application/json") !== true) {
-    // Per logout che risponde con testo o 200 OK senza corpo JSON significativo per il client
-    if (response.ok && (response.status === 200 || response.status === 204)) {
-        const text = await response.text();
-        try {
-            return JSON.parse(text) as T; // Prova a parsare se per caso fosse JSON
-        } catch (e) {
-             // @ts-ignore Non possiamo restituire stringa se T è un oggetto, ma per logout va bene
-            return text as T;
-        }
-    }
-     // @ts-ignore Non possiamo restituire undefined se T è un oggetto
-    return undefined; 
+
+  // Controlla se la risposta ha contenuto
+  const contentType = response.headers.get("content-type");
+  
+  // Se lo status è 204 No Content, restituisci un oggetto vuoto
+  if (response.status === 204) {
+    return {} as T;
   }
+  
+  // Se non è JSON, prova a leggere come testo per logout
+  if (!contentType || !contentType.includes("application/json")) {
+    const text = await response.text();
+    try {
+      return JSON.parse(text) as T;
+    } catch (e) {
+      // Per logout che restituisce testo semplice
+      return text as unknown as T;
+    }
+  }
+
+  // Altrimenti, leggi come JSON
   return response.json() as Promise<T>;
 }
 
@@ -165,7 +309,7 @@ export function getStreamUrl(spotifyId: string, title: string, artist: string, d
  * Richiede che l'utente sia autenticato e i cookie di sessione inviati.
  */
 export async function getUserPlaylists(): Promise<UserPlaylistsResponse> {
-  const response = await fetch(`${BACKEND_URL}/spotify/playlists`, {
+  const response = await fetch(`${BACKEND_URL}/api/me/playlists`, {
     method: "GET",
     credentials: "include",
   });
@@ -181,25 +325,62 @@ export async function getUserPlaylists(): Promise<UserPlaylistsResponse> {
  */
 export async function getPlaylistTracks(
   playlistId: string,
-  limit?: number,
-  offset?: number
+  limit: number = 50,
+  offset: number = 0
 ): Promise<PlaylistTracksResponse> {
-  const params = new URLSearchParams();
-  if (limit !== undefined) {
-    params.append("limit", limit.toString());
-  }
-  if (offset !== undefined) {
-    params.append("offset", offset.toString());
-  }
+  const params = new URLSearchParams({
+    limit: limit.toString(),
+    offset: offset.toString()
+  });
   
-  let url = `${BACKEND_URL}/spotify/playlists/${playlistId}/tracks`;
-  if (params.toString()) {
-    url += `?${params.toString()}`;
-  }
+  const response = await fetch(`${BACKEND_URL}/api/playlists/${playlistId}/tracks?${params}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  
+  return handleResponse<PlaylistTracksResponse>(response);
+}
 
-  const response = await fetch(url, {
+// --- Dettagli Artista e Album ---
+
+/**
+ * Recupera i dettagli di un artista da Spotify.
+ * @param artistId ID dell'artista Spotify.
+ */
+export async function getArtistDetails(artistId: string): Promise<ArtistDetailsResponse> {
+  const response = await fetch(`${BACKEND_URL}/api/artists/${artistId}`, {
     method: "GET",
     credentials: "include",
   });
-  return handleResponse<PlaylistTracksResponse>(response);
+  return handleResponse<ArtistDetailsResponse>(response);
+}
+
+/**
+ * Recupera i dettagli di un album da Spotify.
+ * @param albumId ID dell'album Spotify.
+ */
+export async function getAlbumDetails(albumId: string): Promise<AlbumDetailsResponse> {
+  const response = await fetch(`${BACKEND_URL}/api/albums/${albumId}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  
+  return handleResponse<AlbumDetailsResponse>(response);
+}
+
+// Nuove funzioni per raccomandazioni e playlist
+export async function getRecommendations(options: RecommendationOptions): Promise<RecommendationResponse> {
+  const params = new URLSearchParams();
+  
+  if (options.seed_tracks) params.append('seed_tracks', options.seed_tracks);
+  if (options.seed_artists) params.append('seed_artists', options.seed_artists);
+  if (options.seed_genres) params.append('seed_genres', options.seed_genres);
+  if (options.limit) params.append('limit', options.limit.toString());
+  
+  const response = await fetch(`${BACKEND_URL}/api/recommendations/playlists?${params}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  
+  return handleResponse<RecommendationResponse>(response);
 }
