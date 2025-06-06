@@ -46,7 +46,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     showPlaylist: false,
   });
 
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null!);
 
   const loadAndPlayAudio = (track: api.SpotifyTrack) => {
     if (audioRef.current) {
