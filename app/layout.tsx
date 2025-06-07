@@ -1,38 +1,19 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from 'next/font/google';
+import { AuthProvider } from '@/components/providers/AuthProvider';
+import { ViewProvider } from '@/app/contexts/ViewContext';
+import { PlayerProvider } from '@/app/contexts/PlayerContext';
 import "./globals.css";
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 
+
 const geistSans = Geist({
+  subsets: ["latin"],
   variable: "--font-geist-sans",
-  subsets: ["latin"],
 });
-
-const geistMono = Geist_Mono({
+const geistMono = Geist({
+  subsets: ["latin"],
   variable: "--font-geist-mono",
-  subsets: ["latin"],
 });
-
-export const metadata: Metadata = {
-  title: "Freesound - Music Streaming",
-  description: "Ascolta musica gratis con Freesound - La tua esperienza musicale definitiva",
-  manifest: '/manifest.json',
-  themeColor: '#f97316',
-  appleWebApp: {
-    capable: true,
-    title: 'Freesound',
-    statusBarStyle: 'black-translucent',
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
-  icons: {
-    icon: '/icon.png',
-    apple: '/icon.png',
-  },
-};
 
 export default function RootLayout({
   children,
@@ -40,12 +21,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it">
+    <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable}`}
       >
-        <PWAInstallPrompt />
-        {children}
+        <AuthProvider>
+          <ViewProvider>
+            <PlayerProvider>
+              <PWAInstallPrompt />
+              {children}
+            </PlayerProvider>
+          </ViewProvider>
+        </AuthProvider>
       </body>
     </html>
   );

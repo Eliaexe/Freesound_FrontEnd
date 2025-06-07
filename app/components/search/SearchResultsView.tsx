@@ -11,6 +11,7 @@ interface SearchResultsViewProps {
   isPlaying: boolean;
   onNavigateToArtist: (artistId: string) => void;
   onNavigateToAlbum: (albumId: string) => void;
+  onNavigateToPlaylist: (playlistId: string) => void;
 }
 
 export function SearchResultsView({ 
@@ -19,7 +20,8 @@ export function SearchResultsView({
   currentTrack, 
   isPlaying, 
   onNavigateToArtist, 
-  onNavigateToAlbum 
+  onNavigateToAlbum,
+  onNavigateToPlaylist
 }: SearchResultsViewProps) {
   // Usa i nuovi risultati multi-tipo se disponibili, altrimenti fallback alle sole tracce
   const results = searchResponse.results || [];
@@ -41,25 +43,23 @@ export function SearchResultsView({
         onNavigateToArtist(item.spotify_id);
       } else if (item.type === 'album') {
         onNavigateToAlbum(item.spotify_id);
-      } else {
-        // Per playlist potresti implementare navigazione o anteprima
-        console.log(`Clicked on ${item.type}:`, item);
-        // TODO: Implementa navigazione verso playlist
+      } else if (item.type === 'playlist') {
+        onNavigateToPlaylist(item.spotify_id);
       }
     };
 
     // Badge per il tipo di risultato
     const getTypeBadge = (type: string) => {
-      const badges = {
-        track: { text: 'Brano', color: 'bg-green-500' },
-        artist: { text: 'Artista', color: 'bg-blue-500' },
-        album: { text: 'Album', color: 'bg-purple-500' },
-        playlist: { text: 'Playlist', color: 'bg-orange-500' }
-      };
-      const badge = badges[type as keyof typeof badges] || { text: type, color: 'bg-gray-500' };
+      const badgeText = {
+        track: 'Brano',
+        artist: 'Artista',
+        album: 'Album',
+        playlist: 'Playlist'
+      }[type] || type;
+
       return (
-        <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium text-white ${badge.color} z-10`}>
-          {badge.text}
+        <div className="absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium text-primary-foreground bg-primary/80 backdrop-blur-sm z-10">
+          {badgeText}
         </div>
       );
     };
@@ -105,8 +105,8 @@ export function SearchResultsView({
     return (
       <Card 
         key={itemKey}
-        className={`relative overflow-hidden rounded-xl cursor-pointer group transition-all duration-300 hover:scale-105 ${
-          isCurrentTrack ? 'ring-2 ring-orange-500' : ''
+        className={`relative overflow-hidden rounded-lg cursor-pointer group transition-all duration-200 hover:scale-[1.03] bg-card ${
+          isCurrentTrack ? 'ring-2 ring-primary' : ''
         }`}
         onClick={handleClick}
       >
@@ -118,25 +118,22 @@ export function SearchResultsView({
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage: item.image ? `url(${item.image})` : 'none',
-            backgroundColor: item.image ? 'transparent' : '#8B5CF6'
+            backgroundColor: item.image ? 'transparent' : 'hsl(var(--muted))'
           }}
         >
-          {/* Overlay scuro per leggibilità */}
-          <div className="absolute inset-0 bg-black/60 group-hover:bg-black/50 transition-all duration-300" />
-          
-          {/* Gradiente dal basso per migliore leggibilità del testo */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-black/50 group-hover:bg-black/40 transition-all duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         </div>
 
-        <CardContent className="relative z-10 p-3 lg:p-4 flex flex-col h-full justify-between min-h-[200px]">
+        <CardContent className="relative z-10 p-3 flex flex-col h-full justify-between min-h-[180px] sm:min-h-[200px]">
           {/* Indicatore di riproduzione per tracce - parte superiore */}
           <div className="flex justify-end">
             {isCurrentTrack && (
-              <div className="w-8 h-8 bg-orange-500/90 backdrop-blur-sm rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary/90 backdrop-blur-sm rounded-full flex items-center justify-center">
                 {isPlaying ? (
-                  <Pause className="w-4 h-4 text-white" />
+                  <Pause className="w-4 h-4 text-primary-foreground" />
                 ) : (
-                  <Music className="w-4 h-4 text-white animate-pulse" />
+                  <Music className="w-4 h-4 text-primary-foreground animate-pulse" />
                 )}
               </div>
             )}
@@ -152,26 +149,17 @@ export function SearchResultsView({
                 }}>
               {item.name || 'Titolo sconosciuto'}
             </h3>
-            <p className="text-xs lg:text-sm text-white/90 truncate mb-1 drop-shadow-lg">
+            <p className="text-xs text-white/80 truncate mb-1 drop-shadow-lg">
               {getSubtitle(item)}
             </p>
             
-            {/* Info extra */}
-            <div className="text-xs text-white/80 font-mono truncate">
+            <div className="text-xs text-white/70 font-mono truncate">
               {getExtraInfo(item)}
             </div>
-            
-            {/* Score di rilevanza per debug (solo in dev) */}
-            {process.env.NODE_ENV === 'development' && item.relevance && (
-              <div className="text-xs text-yellow-400 mt-1">
-                Score: {item.relevance}
-              </div>
-            )}
           </div>
         </CardContent>
         
-        {/* Effetto hover */}
-        <div className="absolute inset-0 bg-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </Card>
     );
   };
@@ -179,11 +167,10 @@ export function SearchResultsView({
   return (
     <div className="p-4 lg:p-8">
       <div className="mb-4 lg:mb-6">
-        <h2 className="text-xl lg:text-2xl font-semibold text-white mb-2">Risultati della Ricerca</h2>
+        <h2 className="text-xl lg:text-2xl font-semibold text-foreground mb-2">Risultati della Ricerca</h2>
         
-        {/* Mostra totali se disponibili */}
         {searchResponse.total_found && (
-          <div className="text-sm text-white/70 flex gap-4">
+          <div className="text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
             <span>Brani: {searchResponse.total_found.tracks}</span>
             <span>Artisti: {searchResponse.total_found.artists}</span>
             <span>Album: {searchResponse.total_found.albums}</span>
@@ -192,13 +179,10 @@ export function SearchResultsView({
         )}
       </div>
       
-      {/* Griglia responsive: 2 colonne mobile, 3 desktop */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-        {/* Mostra i risultati multi-tipo se disponibili */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4">
         {results.length > 0 ? (
           results.map(renderResultCard)
         ) : (
-          // Fallback per compatibilità: mostra solo le tracce
           tracks.map((track, index) => renderResultCard({...track, type: 'track'}, index))
         )}
       </div>

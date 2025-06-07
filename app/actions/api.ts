@@ -1,4 +1,17 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://reconstruction-starring-birds-fig.trycloudflare.com"
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:5501";
+
+export interface SpotifyImage {
+    url: string;
+    height?: number;
+    width?: number;
+}
+
+export interface User {
+  display_name: string;
+  email: string;
+  id: string;
+  images: SpotifyImage[];
+}
 
 export interface SpotifyUser {
   displayName: string;
@@ -29,7 +42,7 @@ export interface SpotifyTrack {
 export interface SpotifyArtist {
   spotify_id: string;
   name: string;
-  image?: string;
+  images?: Array<{ url: string }>;
   type: 'artist';
   genres: string[];
   followers: number;
@@ -189,6 +202,14 @@ export interface RecommendationOptions {
   limit?: number;
 }
 
+// Aggiungi alla fine delle interfacce
+export interface TopTracksResponse {
+    items: SpotifyTrack[];
+    total: number;
+    limit: number;
+    offset: number;
+}
+
 // Helper per gestire le risposte fetch
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -197,6 +218,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
       errorData = await response.json();
     } catch (e) {
       // Se il corpo non è JSON o è vuoto
+     
       errorData = { message: response.statusText };
     }
     console.error("Errore API:", response.status, errorData);
@@ -239,18 +261,11 @@ export function getLoginUrl(): string {
  * Effettua il logout dell'utente.
  * Richiede che i cookie di sessione siano inviati correttamente dal browser.
  */
-export async function logoutUser(): Promise<string> {
-  const response = await fetch(`${BACKEND_URL}/auth/logout`, {
-    method: "GET",
-    credentials: "include", // Invia i cookie
+export async function logoutUser(): Promise<void> {
+  await fetch(`${BACKEND_URL}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
   });
-  // Logout potrebbe restituire testo semplice, non JSON.
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Errore API logout:", response.status, errorText);
-    throw new Error(errorText || "Errore durante il logout");
-  }
-  return response.text();
 }
 
 /**
@@ -263,6 +278,22 @@ export async function getAuthStatus(): Promise<AuthStatus> {
     credentials: "include", // Invia i cookie
   });
   return handleResponse<AuthStatus>(response);
+}
+
+/**
+ * Recupera il profilo dell'utente attualmente autenticato.
+ * Richiede che i cookie di sessione siano inviati correttamente dal browser.
+ */
+export async function getMe(): Promise<User> {
+  const response = await fetch(`${BACKEND_URL}/api/me`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Content-Type': 'application/json',
+    },
+  });
+  return handleResponse<User>(response);
 }
 
 // --- Ricerca ---
@@ -383,4 +414,13 @@ export async function getRecommendations(options: RecommendationOptions): Promis
   });
   
   return handleResponse<RecommendationResponse>(response);
+}
+
+// Aggiungi nuovo metodo API
+export async function getUserTopTracks(): Promise<TopTracksResponse> {
+    const response = await fetch(`${BACKEND_URL}/api/home/content`, {
+        method: 'GET',
+        credentials: 'include',
+    });
+    return handleResponse<TopTracksResponse>(response);
 }

@@ -39,8 +39,8 @@ export function AlbumDetailsView({ albumId, onPlayTrack, currentTrack, isPlaying
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full p-8">
-        <Loader2 className="w-8 h-8 text-white animate-spin mr-3" />
-        <span className="text-white/80">Caricamento album...</span>
+        <Loader2 className="w-8 h-8 text-primary animate-spin mr-3" />
+        <span className="text-muted-foreground">Caricamento album...</span>
       </div>
     );
   }
@@ -48,7 +48,7 @@ export function AlbumDetailsView({ albumId, onPlayTrack, currentTrack, isPlaying
   if (error) {
     return (
       <div className="text-center p-8">
-        <p className="text-red-400 mb-4">Errore: {error}</p>
+        <p className="text-destructive mb-4">Errore: {error}</p>
       </div>
     );
   }
@@ -56,7 +56,7 @@ export function AlbumDetailsView({ albumId, onPlayTrack, currentTrack, isPlaying
   if (!albumData) {
     return (
       <div className="text-center p-8">
-        <p className="text-white/70">Nessun dato disponibile per questo album.</p>
+        <p className="text-muted-foreground">Nessun dato disponibile per questo album.</p>
       </div>
     );
   }
@@ -69,7 +69,7 @@ export function AlbumDetailsView({ albumId, onPlayTrack, currentTrack, isPlaying
       {/* Header album */}
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-8">
         {/* Immagine album */}
-        <div className="w-48 h-48 lg:w-64 lg:h-64 mx-auto lg:mx-0 rounded-2xl overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex-shrink-0 shadow-2xl">
+        <div className="w-48 h-48 lg:w-64 lg:h-64 mx-auto lg:mx-0 rounded-2xl overflow-hidden bg-primary/20 flex-shrink-0 shadow-lg">
           {album.image ? (
             <img 
               src={album.image} 
@@ -78,20 +78,20 @@ export function AlbumDetailsView({ albumId, onPlayTrack, currentTrack, isPlaying
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Disc3 className="w-16 h-16 text-white/70" />
+              <Disc3 className="w-16 h-16 text-muted-foreground" />
             </div>
           )}
         </div>
         
         {/* Info album */}
         <div className="text-center lg:text-left flex-1">
-          <p className="text-white/80 text-sm uppercase tracking-wider mb-2">
+          <p className="text-muted-foreground text-sm uppercase tracking-wider mb-2">
             {album.type === 'album' ? 'Album' : 'Singolo'}
           </p>
-          <h1 className="text-3xl lg:text-5xl font-bold text-white mb-4">{album.name}</h1>
-          <p className="text-xl text-white/90 mb-4">{album.artist}</p>
+          <h1 className="text-3xl lg:text-5xl font-bold text-foreground mb-4">{album.name}</h1>
+          <p className="text-xl text-muted-foreground mb-4">{album.artist}</p>
           
-          <div className="flex flex-wrap justify-center lg:justify-start gap-4 mb-4 text-white/80">
+          <div className="flex flex-wrap justify-center lg:justify-start gap-4 mb-4 text-muted-foreground">
             {album.release_date && (
               <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
@@ -111,7 +111,7 @@ export function AlbumDetailsView({ albumId, onPlayTrack, currentTrack, isPlaying
           {album.genres.length > 0 && (
             <div className="flex flex-wrap justify-center lg:justify-start gap-2 mb-4">
               {album.genres.slice(0, 3).map((genre, index) => (
-                <span key={index} className="px-3 py-1 bg-white/10 rounded-full text-sm text-white/90">
+                <span key={index} className="px-3 py-1 bg-secondary rounded-full text-sm text-secondary-foreground">
                   {genre}
                 </span>
               ))}
@@ -119,7 +119,7 @@ export function AlbumDetailsView({ albumId, onPlayTrack, currentTrack, isPlaying
           )}
           
           {album.label && (
-            <p className="text-white/60 text-sm">
+            <p className="text-muted-foreground/80 text-sm">
               {album.label}
             </p>
           )}
@@ -128,7 +128,7 @@ export function AlbumDetailsView({ albumId, onPlayTrack, currentTrack, isPlaying
 
       {/* Lista tracce */}
       <div>
-        <h2 className="text-xl lg:text-2xl font-semibold text-white mb-4">Tracce</h2>
+        <h2 className="text-xl lg:text-2xl font-semibold text-foreground mb-4">Tracce</h2>
         <div className="space-y-1">
           {tracks.map((track) => {
             const isCurrentTrack = currentTrack?.spotify_id === track.spotify_id;
@@ -139,7 +139,7 @@ export function AlbumDetailsView({ albumId, onPlayTrack, currentTrack, isPlaying
               artist: track.artist,
               album: track.album,
               duration: track.duration,
-              image: track.image,
+              image: album.image || track.image,
               type: 'track',
               preview_url: track.preview_url
             };
@@ -147,26 +147,26 @@ export function AlbumDetailsView({ albumId, onPlayTrack, currentTrack, isPlaying
             return (
               <div 
                 key={track.spotify_id}
-                className={`flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-all ${
-                  isCurrentTrack ? 'bg-orange-500/20' : ''
+                className={`flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-all ${
+                  isCurrentTrack ? 'bg-primary/20' : ''
                 }`}
                 onClick={() => onPlayTrack(spotifyTrack)}
               >
-                <span className="text-white/70 font-mono text-sm w-8 text-center">{track.track_number}</span>
+                <span className="text-muted-foreground font-mono text-sm w-8 text-center">{track.track_number}</span>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-white font-medium truncate">{track.name}</h4>
-                  <p className="text-white/70 text-sm">{track.artist}</p>
+                  <h4 className="text-foreground font-medium truncate">{track.name}</h4>
+                  <p className="text-muted-foreground text-sm">{track.artist}</p>
                 </div>
                 {track.explicit && (
-                  <span className="px-2 py-1 bg-gray-600 rounded text-xs text-white/90 hidden sm:inline-block">E</span>
+                  <span className="px-2 py-1 bg-muted rounded text-xs text-muted-foreground hidden sm:inline-block">E</span>
                 )}
-                <span className="text-white/70 text-sm font-mono hidden sm:block">{formatDuration(track.duration)}</span>
+                <span className="text-muted-foreground text-sm font-mono hidden sm:block">{formatDuration(track.duration)}</span>
                 {isCurrentTrack && (
-                  <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
                     {isPlaying ? (
-                      <Pause className="w-3 h-3 text-white" />
+                      <Pause className="w-3 h-3 text-primary-foreground" />
                     ) : (
-                      <Music className="w-3 h-3 text-white" />
+                      <Music className="w-3 h-3 text-primary-foreground" />
                     )}
                   </div>
                 )}

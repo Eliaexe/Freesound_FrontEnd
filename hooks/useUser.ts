@@ -1,36 +1,36 @@
 import useSWR from 'swr';
-import { fetcher } from '@/lib/utils'; // Assumiamo che esista un fetcher helper
+import { fetcher } from '@/lib/utils';
+
+export interface SpotifyImage {
+    url: string;
+    height?: number;
+    width?: number;
+}
 
 export interface User {
-  displayName: string;
+  display_name: string;
   email: string;
   id: string;
-  // Potremmo aggiungere l'URL dell'avatar qui in futuro
+  images: SpotifyImage[];
 }
 
-interface UserStatus {
-  isAuthenticated: boolean;
-  user?: User;
-}
-
-const API_URL = "https://reconstruction-starring-birds-fig.trycloudflare.com/";
+const API_URL = "http://127.0.0.1:5501";
 
 export function useUser() {
-  const { data, error, isLoading, mutate } = useSWR<UserStatus>(`${API_URL}/auth/status`, fetcher);
+  const { data: user, error, isLoading, mutate } = useSWR<User>(`${API_URL}/api/me`, fetcher);
 
   const logout = async () => {
     try {
         await fetch(`${API_URL}/auth/logout`);
-        // Aggiorna lo stato locale per riflettere il logout senza attendere la revalidazione
-        mutate({ isAuthenticated: false, user: undefined }, false);
+        mutate(undefined, false); // Pulisce i dati utente locali
     } catch (error) {
         console.error("Errore durante il logout:", error);
     }
   };
 
   return {
-    user: data?.user,
-    isAuthenticated: data?.isAuthenticated,
+    user,
+    isAuthenticated: !error && user && user.id,
     isLoading,
     isError: error,
     logout

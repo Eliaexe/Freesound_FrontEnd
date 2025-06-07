@@ -1,76 +1,34 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Search,
-  Pause,
-  SkipBack,
-  SkipForward,
-  Shuffle,
-  Repeat,
-  Volume2,
-  ChevronLeft,
-  Music,
-  Menu,
-  X,
-  Loader2,
-  ListMusic,
-  ArrowLeft,
-} from "lucide-react"
-import { PlayerProvider } from '@/app/contexts/PlayerContext';
-import { ViewProvider } from '@/app/contexts/ViewContext';
-import { Sidebar } from '@/app/components/layout/Sidebar';
-import { Header } from '@/app/components/layout/Header';
-import { Player } from '@/app/components/player/Player';
-import { ViewRenderer } from '@/app/components/views/ViewRenderer';
-import { LoadingScreen } from './components/common/LoadingScreen';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { Dashboard } from '@/app/components/views/ViewRenderer';
+import { useView } from '@/app/contexts/ViewContext';
+import { useEffect } from 'react';
 
-import * as api from "./actions/api"
-import { CurrentView, ViewType } from "./types"
-import { formatTime } from "./utils/formatters"
-
-export default function Home() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+export default function HomePage() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const { currentView, navigateToHome, navigateToLogin } = useView();
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    // Gestisce la navigazione basata sullo stato di autenticazione
+    if (!isLoading) {
+      if (isAuthenticated && currentView.type === 'login') {
+        // Se l'utente si è autenticato dalla LoginView, vai alla HomeView
+        navigateToHome();
+      } else if (!isAuthenticated && currentView.type !== 'login') {
+        // Se l'utente non è autenticato e non è nella LoginView, vai alla LoginView
+        navigateToLogin();
+      }
+    }
+  }, [isAuthenticated, isLoading, currentView.type, navigateToHome, navigateToLogin]);
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4 bg-black text-white">
+        <p className="text-center">Caricamento in corso...</p>
+      </div>
+    );
   }
 
-  return (
-    <PlayerProvider>
-      <ViewProvider>
-        <div className="h-screen bg-gradient-to-br from-orange-400 via-red-400 to-pink-400 text-white flex flex-col overflow-hidden">
-          
-          {/* Mobile Sidebar Overlay */}
-          {sidebarOpen && (
-            <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-          )}
-
-          <div className="flex flex-1 overflow-hidden">
-            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-            
-            <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-              <Header onToggleSidebar={() => setSidebarOpen(v => !v)} />
-              
-              <ScrollArea className="flex-1 overflow-hidden">
-                <ViewRenderer />
-              </ScrollArea>
-            </div>
-          </div>
-          
-          <Player />
-
-        </div>
-      </ViewProvider>
-    </PlayerProvider>
-  );
+  return <Dashboard />;
 }

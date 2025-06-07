@@ -16,6 +16,8 @@ interface ViewContextType {
   navigateToHome: () => void;
   navigateToArtist: (artistId: string) => void;
   navigateToAlbum: (albumId: string) => void;
+  navigateToPlaylist: (playlistId: string) => void;
+  navigateToLogin: () => void;
 }
 
 const ViewContext = createContext<ViewContextType | undefined>(undefined);
@@ -39,6 +41,10 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     setCurrentView({ type: 'album', data: { albumId } });
   };
 
+  const navigateToPlaylist = (playlistId: string) => {
+    setCurrentView({ type: 'playlist', data: { playlistId } });
+  };
+
   const navigateToLogin = () => {
     setCurrentView({ type: 'login' });
   };
@@ -49,6 +55,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     navigateToHome,
     navigateToArtist,
     navigateToAlbum,
+    navigateToPlaylist,
     navigateToLogin
   };
 

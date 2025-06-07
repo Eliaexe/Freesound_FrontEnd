@@ -5,8 +5,30 @@ import HomeView from './HomeView';
 import { SearchView } from './SearchView';
 import { ArtistView } from './ArtistView';
 import { AlbumView } from './AlbumView';
-import { LoginView } from './LoginView';
-export function ViewRenderer() {
+import LoginView from '../login/login';
+import { useState } from 'react';
+import { Header } from '@/app/components/layout/Header';
+import { Sidebar } from '../layout/Sidebar';
+import { Player } from '@/app/components/player/Player';
+import { PlaylistView } from '@/app/components/player/PlaylistView';
+export function Dashboard() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  return (
+    <div className="flex flex-col h-screen bg-background">
+      <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+      <div className="flex flex-row h-full overflow-hidden">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <main className="flex-1 overflow-y-auto">
+          <ViewRenderer />
+        </main>
+      </div>
+      <Player />
+    </div>
+  );
+}
+
+function ViewRenderer() {
   const { currentView } = useView();
 
   switch (currentView.type) {
@@ -19,73 +41,10 @@ export function ViewRenderer() {
     case 'album':
       return <AlbumView albumId={currentView.data.albumId} />;
     case 'playlist':
-      return <div>Playlist View (Work In Progress)</div>;
+      return <div className="p-4 lg:p-8">Playlist View (Work In Progress)</div>;
     case 'login':
       return <LoginView />;
     default:
       return <HomeView />;
   }
 }
-
-// Creazione dei file placeholder per le viste
-// HomeView.tsx
-// export function HomeView() {
-//     return (
-//         <div className="p-4 lg:p-8">
-//             <h1 className="text-3xl lg:text-4xl font-bold text-white mb-8">Benvenuto in Freesound!</h1>
-//             <p className="text-white/80 text-lg mb-6">
-//                 Usa la barra di ricerca in alto per trovare la tua musica preferita.
-//             </p>
-//             <div className="mt-12 text-center">
-//                 <Music className="w-16 h-16 text-white/30 mx-auto mb-4"/>
-//                 <p className="text-white/60">Esplora e ascolta.</p>
-//             </div>
-//         </div>
-//     );
-// }
-
-// SearchView.tsx
-// export function SearchView({ searchData }: { searchData: any }) {
-//     if (!searchData) {
-//         return <div className="p-8 text-center text-white/80">Effettua una ricerca per vedere i risultati.</div>
-//     }
-
-//     const { results, query, error } = searchData;
-
-//     if (error) {
-//         return <div className="p-8 text-center text-red-400">Errore nella ricerca: {error.message}</div>
-//     }
-    
-//     // Qui andrebbe SearchResultsView, ma per ora teniamolo semplice
-//     return (
-//         <div className="p-4 lg:p-8">
-//             <h1 className="text-2xl font-bold text-white mb-6">Risultati per "{query}"</h1>
-//             <pre className="text-xs bg-black/20 p-4 rounded-md overflow-auto">{JSON.stringify(results, null, 2)}</pre>
-//         </div>
-//     )
-// }
-
-// ArtistView.tsx
-// export function ArtistView({ artistId }: { artistId: string }) {
-//     // Qui andrà la logica per fetchare i dati dell'artista
-//     return (
-//         <div className="p-4 lg:p-8">
-//             <h1 className="text-3xl font-bold">Dettagli Artista: {artistId}</h1>
-//             {/* ... Dettagli ... */}
-//         </div>
-//     )
-// }
-
-// AlbumView.tsx
-// export function AlbumView({ albumId }: { albumId: string }) {
-//     // Qui andrà la logica per fetchare i dati dell'album
-//     return (
-//         <div className="p-4 lg:p-8">
-//             <h1 className="text-3xl font-bold">Dettagli Album: {albumId}</h1>
-//             {/* ... Dettagli ... */}
-//         </div>
-//     )
-// }
-
-// PlaylistView.tsx (la vista principale, non il popup)
-// export function PlaylistView({ playlistId }: { playlistId: string }) { ... } 
