@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
+type SearchType = 'track' | 'album' | 'artist' | 'playlist';
+
 const SearchView = () => {
   const [searchTypes, setSearchTypes] = useState<SearchType[]>([
     'track', 'album', 'artist', 'playlist'
